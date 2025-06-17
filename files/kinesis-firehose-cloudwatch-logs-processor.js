@@ -85,7 +85,16 @@ import * as zlib from 'node:zlib'
  * The default implementation below just extracts the message and appends a newline to it.
  */
 function transformLogEvent (logEvent) {
-  return `${logEvent.message}\n`
+  const hecEndpointType = process.env.HEC_ENDPOINT_TYPE || 'Raw';
+  
+  if (hecEndpointType === 'Event') {
+    const eventData = {
+      event: logEvent.message
+    };
+    return JSON.stringify(eventData) + '\n';
+  } else {
+    return `${logEvent.message}\n`;
+  }
 }
 
 function processRecords (records) {
