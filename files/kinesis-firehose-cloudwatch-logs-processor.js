@@ -85,7 +85,19 @@ import * as zlib from 'node:zlib'
  * The default implementation below just extracts the message and appends a newline to it.
  */
 function transformLogEvent (logEvent) {
-  return `${logEvent.message}\n`
+  const endpointType = process.env.HEC_ENDPOINT_TYPE || 'Raw'
+  
+  if (endpointType === 'Event') {
+    return JSON.stringify({
+      time: logEvent.timestamp / 1000, // Convert to seconds
+      host: process.env.HOST_IDENTIFIER || 'aws_lambda',
+      source: process.env.SOURCE_IDENTIFIER || 'cloudwatch',
+      sourcetype: process.env.SOURCETYPE || 'aws:cloudwatch:logs',
+      event: logEvent.message
+    }) + '\n'
+  } else {
+    return `${logEvent.message}\n`
+  }
 }
 
 function processRecords (records) {
