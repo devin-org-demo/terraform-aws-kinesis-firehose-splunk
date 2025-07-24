@@ -82,10 +82,22 @@ import * as zlib from 'node:zlib'
  *   "message": "log message 1"
  * }
  *
- * The default implementation below just extracts the message and appends a newline to it.
+ * The implementation below formats the log event based on the HEC_ENDPOINT_TYPE environment variable.
+ * For "Raw" type: extracts the message and appends a newline (default behavior).
+ * For "Event" type: wraps the message in JSON format according to Splunk Event HEC spec.
  */
 function transformLogEvent (logEvent) {
-  return `${logEvent.message}\n`
+  const hecEndpointType = process.env.HEC_ENDPOINT_TYPE || 'Raw'
+
+  if (hecEndpointType === 'Event') {
+    const eventData = {
+      event: logEvent.message,
+      time: Math.floor(logEvent.timestamp / 1000)
+    }
+    return JSON.stringify(eventData) + '\n'
+  } else {
+    return `${logEvent.message}\n`
+  }
 }
 
 function processRecords (records) {
