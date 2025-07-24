@@ -267,7 +267,12 @@ resource "aws_lambda_function" "firehose_lambda_transform" {
   kms_key_arn                    = var.lambda_function_environment_variables != {} ? var.lambda_kms_key_arn : null
 
   environment {
-    variables = var.lambda_function_environment_variables
+    variables = merge(
+      var.lambda_function_environment_variables,
+      {
+        HEC_ENDPOINT_TYPE = var.hec_endpoint_type
+      }
+    )
   }
 
   dynamic "tracing_config" {
