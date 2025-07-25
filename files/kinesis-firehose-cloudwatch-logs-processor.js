@@ -73,6 +73,8 @@ import { Kinesis } from '@aws-sdk/client-kinesis'
 import { strict as assert } from 'node:assert'
 import * as zlib from 'node:zlib'
 
+const HEC_ENDPOINT_TYPE = process.env.HEC_ENDPOINT_TYPE || 'Raw'
+
 /**
  * logEvent has this format:
  *
@@ -85,7 +87,15 @@ import * as zlib from 'node:zlib'
  * The default implementation below just extracts the message and appends a newline to it.
  */
 function transformLogEvent (logEvent) {
-  return `${logEvent.message}\n`
+  if (HEC_ENDPOINT_TYPE === 'Event') {
+    const eventObj = {
+      event: logEvent.message,
+      time: logEvent.timestamp ? Math.floor(logEvent.timestamp / 1000) : Math.floor(Date.now() / 1000)
+    }
+    return JSON.stringify(eventObj) + '\n'
+  } else {
+    return `${logEvent.message}\n`
+  }
 }
 
 function processRecords (records) {
